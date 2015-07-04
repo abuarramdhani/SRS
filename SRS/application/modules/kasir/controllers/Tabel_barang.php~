@@ -1,0 +1,260 @@
+<?php if (!defined('BASEPATH'))  exit('No direct script access allowed');
+
+/**
+ * Controller tabel_barang
+ * @created on : Friday, 01-May-2015 08:56:17
+ * @author Daud D. Simbolon <daud.simbolon@gmail.com>
+ * Copyright 2015
+ *
+ *
+ */
+
+
+class tabel_barang extends MY_Controller
+{
+
+    public function __construct() 
+    {
+        parent::__construct();         
+        $this->load->model('tabel_barangs');
+    }
+    
+
+    /**
+    * List all data tabel_barang
+    *
+    */
+    public function index() 
+    {
+        $config = array(
+            'base_url'          => site_url('tabel_barang/index/'),
+            'total_rows'        => $this->tabel_barangs->count_all(),
+            'per_page'          => $this->config->item('per_page'),
+            'uri_segment'       => 3,
+            'num_links'         => 9,
+            'use_page_numbers'  => FALSE
+            
+        );
+        
+        $this->pagination->initialize($config);
+        $data['total']          = $config['total_rows'];
+        $data['pagination']     = $this->pagination->create_links();
+        $data['number']         = (int)$this->uri->segment(3) +1;
+        $data['tabel_barangs']       = $this->tabel_barangs->get_all($config['per_page'], $this->uri->segment(3));
+        $this->template->render('tabel_barang/view',$data);
+	      
+    }
+
+    
+
+    /**
+    * Call Form to Add  New tabel_barang
+    *
+    */
+    public function add() 
+    {       
+        $data['tabel_barang'] = $this->tabel_barangs->add();
+        $data['action']  = 'tabel_barang/save';
+     
+        $this->template->js_add('
+                $(document).ready(function(){
+                // binds form submission and fields to the validation engine
+                $("#form_tabel_barang").parsley();
+                        });','embed');
+      
+        $this->template->render('tabel_barang/form',$data);
+
+    }
+
+    
+
+    /**
+    * Call Form to Modify tabel_barang
+    *
+    */
+    public function edit($id='') 
+    {
+        if ($id != '') 
+        {
+
+            $data['tabel_barang']      = $this->tabel_barangs->get_one($id);
+            $data['action']       = 'tabel_barang/save/' . $id;           
+      
+            $this->template->js_add('
+                     $(document).ready(function(){
+                    // binds form submission and fields to the validation engine
+                    $("#form_tabel_barang").parsley();
+                                    });','embed');
+            
+            $this->template->render('tabel_barang/form',$data);
+            
+        }
+        else 
+        {
+            $this->session->set_flashdata('notif', notify('Data tidak ditemukan','info'));
+            redirect(site_url('tabel_barang'));
+        }
+    }
+
+
+    
+    /**
+    * Save & Update data  tabel_barang
+    *
+    */
+    public function save($id =NULL) 
+    {
+        // validation config
+        $config = array(
+                  
+                    array(
+                        'field' => 'nm_barang',
+                        'label' => 'Nm Barang',
+                        'rules' => 'trim|xss_clean|required'
+                        ),
+                    
+                    array(
+                        'field' => 'kd_satuan',
+                        'label' => 'Kd Satuan',
+                        'rules' => 'trim|xss_clean|required'
+                        ),
+                    
+                    array(
+                        'field' => 'kd_kategori',
+                        'label' => 'Kd Kategori',
+                        'rules' => 'trim|xss_clean|required'
+                        ),
+                    
+                    array(
+                        'field' => 'hrg_jual',
+                        'label' => 'Hrg Jual',
+                        'rules' => 'trim|xss_clean|required'
+                        ),
+                    
+                    array(
+                        'field' => 'hrg_beli',
+                        'label' => 'Hrg Beli',
+                        'rules' => 'trim|xss_clean|required'
+                        ),
+                               
+                  );
+            
+        // if id NULL then add new data
+        if(!$id)
+        {    
+                  $this->form_validation->set_rules($config);
+
+                  if ($this->form_validation->run() == TRUE) 
+                  {
+                      if ($this->input->post()) 
+                      {
+                          
+                          $this->tabel_barangs->save();
+                          $this->session->set_flashdata('notif', notify('Data berhasil di simpan','success'));
+                          redirect('tabel_barang');
+                      }
+                  } 
+                  else // If validation incorrect 
+                  {
+                      $this->add();
+                  }
+         }
+         else // Update data if Form Edit send Post and ID available
+         {               
+                $this->form_validation->set_rules($config);
+
+                if ($this->form_validation->run() == TRUE) 
+                {
+                    if ($this->input->post()) 
+                    {
+                        $this->tabel_barangs->update($id);
+                        $this->session->set_flashdata('notif', notify('Data berhasil di update','success'));
+                        redirect('tabel_barang');
+                    }
+                } 
+                else // If validation incorrect 
+                {
+                    $this->edit($id);
+                }
+         }
+    }
+
+    
+    
+    /**
+    * Detail tabel_barang
+    *
+    */
+    public function show($id='') 
+    {
+        if ($id != '') 
+        {
+
+            $data['tabel_barang'] = $this->tabel_barangs->get_one($id);            
+            $this->template->render('tabel_barang/_show',$data);
+            
+        }
+        else 
+        {
+            $this->session->set_flashdata('notif', notify('Data tidak ditemukan','info'));
+            redirect(site_url('tabel_barang'));
+        }
+    }
+    
+    
+    /**
+    * Search tabel_barang like ""
+    *
+    */   
+    public function search()
+    {
+        if($this->input->post('q'))
+        {
+            $keyword = $this->input->post('q');
+            
+            $this->session->set_userdata(
+                        array('keyword' => $this->input->post('q',TRUE))
+                    );
+        }
+        
+         $config = array(
+            'base_url'          => site_url('tabel_barang/search/'),
+            'total_rows'        => $this->tabel_barangs->count_all_search(),
+            'per_page'          => $this->config->item('per_page'),
+            'uri_segment'       => 3,
+            'num_links'         => 9,
+            'use_page_numbers'  => FALSE
+        );
+        
+        $this->pagination->initialize($config);
+        $data['total']          = $config['total_rows'];
+        $data['number']         = (int)$this->uri->segment(3) +1;
+        $data['pagination']     = $this->pagination->create_links();
+        $data['tabel_barangs']       = $this->tabel_barangs->get_search($config['per_page'], $this->uri->segment(3));
+       
+        $this->template->render('tabel_barang/view',$data);
+    }
+    
+    
+    /**
+    * Delete tabel_barang by ID
+    *
+    */
+    public function destroy($id) 
+    {        
+        if ($id) 
+        {
+            $this->tabel_barangs->destroy($id);           
+             $this->session->set_flashdata('notif', notify('Data berhasil di hapus','success'));
+             redirect('tabel_barang');
+        } 
+        else 
+        {
+            $this->session->set_flashdata('notif', notify('Data tidak ditemukan','warning'));
+            redirect('tabel_barang');
+        }       
+    }
+
+}
+
+?>
